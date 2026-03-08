@@ -40,8 +40,8 @@ export default function ProfileScreen({ onLogout }) {
                             <Ionicons name="person" size={40} color={COLORS.white} />
                         </View>
                     </View>
-                    <Text style={styles.userName}>Juan Dela Cruz</Text>
-                    <Text style={styles.userEmail}>juan.delacruz@email.com</Text>
+                    <Text style={styles.userName}>Joed Binson Rauto</Text>
+                    <Text style={styles.userEmail}>joed.rauto@email.com</Text>
                     <View style={styles.statsContainer}>
                         <View style={styles.profileStat}>
                             <Text style={styles.profileStatNumber}>3</Text>
