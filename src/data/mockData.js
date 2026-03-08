@@ -63,4 +63,5 @@ export const notifications = [
     { id: 1, message: 'Your report for "Blue Backpack" is under review.', time: '2 min ago' },
     { id: 2, message: '"Silver Watch" has been matched with a claim!', time: '1 hour ago' },
     { id: 3, message: 'Your report for "Scientific Calculator" was approved.', time: '3 hours ago' },
+    { id: 4, message: '"Black Aquaflask Tumbler" has been matched with a claim!', time: '5 hours ago' },
 ];
