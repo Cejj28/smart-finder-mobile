@@ -3,20 +3,17 @@ import {
     View,
     Text,
     StyleSheet,
-    SafeAreaView,
     ScrollView,
     TouchableOpacity,
     Alert,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS, SPACING, RADIUS, FONT_SIZES, FONT_WEIGHTS, SHADOWS } from '../constants/theme';
 
 const MENU_ITEMS = [
     { icon: 'person-outline', label: 'Edit Profile', color: COLORS.primary },
     { icon: 'lock-closed-outline', label: 'Change Password', color: COLORS.primary },
-    { icon: 'notifications-outline', label: 'Notification Settings', color: COLORS.primary },
-    { icon: 'help-circle-outline', label: 'Help & Support', color: COLORS.textMedium },
-    { icon: 'information-circle-outline', label: 'About SmartFinder', color: COLORS.textMedium },
 ];
 
 export default function ProfileScreen({ onLogout }) {

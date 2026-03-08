@@ -5,9 +5,9 @@ import {
     TextInput,
     FlatList,
     StyleSheet,
-    SafeAreaView,
     RefreshControl,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS, SPACING, RADIUS, FONT_SIZES, FONT_WEIGHTS, SHADOWS } from '../constants/theme';
 import ItemCard from '../components/ItemCard';

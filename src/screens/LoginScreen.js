@@ -4,13 +4,13 @@ import {
     Text,
     TextInput,
     StyleSheet,
-    SafeAreaView,
     TouchableOpacity,
     KeyboardAvoidingView,
     Platform,
     Alert,
     Image,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS, SPACING, RADIUS, FONT_SIZES, FONT_WEIGHTS, SHADOWS } from '../constants/theme';
 
