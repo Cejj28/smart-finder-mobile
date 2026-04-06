@@ -13,6 +13,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS, SPACING, RADIUS, FONT_SIZES, FONT_WEIGHTS, SHADOWS } from '../constants/theme';
+import { loginApi } from '../services/api';
 
 export default function LoginScreen({ onLogin }) {
     const [email, setEmail] = useState('');
@@ -20,17 +21,20 @@ export default function LoginScreen({ onLogin }) {
     const [showPassword, setShowPassword] = useState(false);
     const [loading, setLoading] = useState(false);
 
-    const handleLogin = () => {
+    const handleLogin = async () => {
         if (!email.trim() || !password.trim()) {
             Alert.alert('Error', 'Please enter both email and password.');
             return;
         }
         setLoading(true);
-        // Simulate login
-        setTimeout(() => {
+        try {
+            const data = await loginApi(email, password);
             setLoading(false);
-            onLogin({ email });
-        }, 1000);
+            onLogin({ email, token: data.token });
+        } catch (err) {
+            setLoading(false);
+            Alert.alert('Login Failed', 'Invalid email or password.');
+        }
     };
 
     return (

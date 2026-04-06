@@ -11,13 +11,27 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS, SPACING, RADIUS, FONT_SIZES, FONT_WEIGHTS, SHADOWS } from '../constants/theme';
 import ItemCard from '../components/ItemCard';
-import { recentItems } from '../data/mockData';
+import { fetchItems } from '../services/api';
 
 export default function HomeScreen() {
     const [searchTerm, setSearchTerm] = useState('');
     const [refreshing, setRefreshing] = useState(false);
+    const [items, setItems] = useState([]);
 
-    const filteredItems = recentItems.filter((item) => {
+    const loadData = async () => {
+        try {
+            const data = await fetchItems();
+            setItems(data);
+        } catch (e) {
+            console.error(e);
+        }
+    };
+
+    React.useEffect(() => {
+        loadData();
+    }, []);
+
+    const filteredItems = items.filter((item) => {
         const term = searchTerm.toLowerCase();
         return (
             item.item.toLowerCase().includes(term) ||
@@ -26,15 +40,16 @@ export default function HomeScreen() {
         );
     });
 
-    const onRefresh = () => {
+    const onRefresh = async () => {
         setRefreshing(true);
-        setTimeout(() => setRefreshing(false), 1000);
+        await loadData();
+        setRefreshing(false);
     };
 
     const stats = {
-        total: recentItems.length,
-        lost: recentItems.filter((i) => i.type === 'Lost').length,
-        found: recentItems.filter((i) => i.type === 'Found').length,
+        total: items.length,
+        lost: items.filter((i) => i.type === 'Lost').length,
+        found: items.filter((i) => i.type === 'Found').length,
     };
 
     return (
