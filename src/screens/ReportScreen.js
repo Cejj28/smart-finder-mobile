@@ -159,7 +159,13 @@ export default function ReportScreen() {
                             {REPORT_TYPES.map((t) => (
                                 <TouchableOpacity
                                     key={t}
-                                    style={[styles.typeBtn, type === t && styles.typeBtnActive]}
+                                    style={[
+                                        styles.typeBtn,
+                                        type === t && { 
+                                            backgroundColor: t === 'Lost' ? COLORS.error : COLORS.success,
+                                            borderColor: t === 'Lost' ? COLORS.error : COLORS.success,
+                                        }
+                                    ]}
                                     onPress={() => setType(t)}
                                 >
                                     <Ionicons
