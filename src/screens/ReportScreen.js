@@ -17,6 +17,7 @@ import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import { COLORS, SPACING, RADIUS, FONT_SIZES, FONT_WEIGHTS, SHADOWS } from '../constants/theme';
 import { initModel, isModelReady, analyzeImage } from '../services/imageAnalyzer';
+import { createItem } from '../services/api';
 
 const REPORT_TYPES = ['Lost', 'Found'];
 
@@ -27,6 +28,7 @@ export default function ReportScreen() {
     const [description, setDescription] = useState('');
     const [contactInfo, setContactInfo] = useState('');
     const [image, setImage] = useState(null);
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     // ML states
     const [modelLoading, setModelLoading] = useState(true);
@@ -112,16 +114,45 @@ export default function ReportScreen() {
     };
 
     /* ── Form ── */
-    const handleSubmit = () => {
+    const handleSubmit = async () => {
         if (!itemName.trim() || !location.trim()) {
             Alert.alert('Missing Fields', 'Please fill in item name and location.');
             return;
         }
-        Alert.alert(
-            'Report Submitted!',
-            `Your ${type.toLowerCase()} item report for "${itemName}" has been submitted for review.`,
-            [{ text: 'OK', onPress: resetForm }],
-        );
+
+        setIsSubmitting(true);
+        try {
+            const formData = new FormData();
+            formData.append('type', type);
+            formData.append('item_name', itemName);
+            formData.append('location', location);
+            formData.append('description', description);
+            formData.append('contact_info', contactInfo);
+
+            if (image) {
+                const filename = image.split('/').pop();
+                const match = /\.(\w+)$/.exec(filename);
+                const fileType = match ? `image/${match[1]}` : `image`;
+                formData.append('image', {
+                    uri: image,
+                    name: filename,
+                    type: fileType,
+                });
+            }
+
+            await createItem(formData);
+
+            Alert.alert(
+                'Report Submitted!',
+                `Your ${type.toLowerCase()} item report for "${itemName}" has been successfully pushed to the system database.`,
+                [{ text: 'OK', onPress: resetForm }],
+            );
+        } catch (err) {
+            console.error(err);
+            Alert.alert('Submission Failed', 'Could not save report to server. Please check your connection.');
+        } finally {
+            setIsSubmitting(false);
+        }
     };
 
     const resetForm = () => {

@@ -40,3 +40,20 @@ export const fetchItems = async () => {
         status: item.status || 'Pending Review'
     }));
 };
+export const createItem = async (formData) => {
+    const token = await AsyncStorage.getItem('sf_token');
+    const response = await fetch(`${API_URL}/items/`, {
+        method: 'POST',
+        headers: {
+            'Authorization': `Token ${token}`,
+            // Do NOT set Content-Type for FormData, fetch will set it with boundary
+        },
+        body: formData,
+    });
+
+    if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(JSON.stringify(errorData) || 'Failed to create item');
+    }
+    return await response.json();
+};
