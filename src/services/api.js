@@ -11,11 +11,11 @@ const getAuthHeaders = async () => {
     };
 };
 
-export const loginApi = async (email, password) => {
+export const loginApi = async (identifier, password) => {
     const response = await fetch(`${API_URL}/login/`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username: email, password })
+        body: JSON.stringify({ username: identifier, password })
     });
     
     if (!response.ok) {
@@ -29,6 +29,9 @@ export const fetchItems = async () => {
     const response = await fetch(`${API_URL}/items/`, { headers });
     if (!response.ok) throw new Error('Failed to fetch items');
     const data = await response.json();
+    
+    const BASE_SERVER_URL = API_URL.replace('/api', '');
+
     return data.map(item => ({
         id: item.id,
         type: item.type,
@@ -37,16 +40,21 @@ export const fetchItems = async () => {
         submittedBy: item.reporter_username || 'Admin',
         date: new Date(item.created_at).toLocaleDateString(),
         description: item.description,
+        // Ensure image_url is formatted for mobile display
+        image_url: (item.image && typeof item.image === 'string') 
+            ? (item.image.startsWith('http') ? item.image : `${BASE_SERVER_URL}${item.image}`)
+            : null,
         status: item.status || 'Pending Review'
     }));
 };
+
 export const createItem = async (formData) => {
     const token = await AsyncStorage.getItem('sf_token');
     const response = await fetch(`${API_URL}/items/`, {
         method: 'POST',
         headers: {
             'Authorization': `Token ${token}`,
-            // Do NOT set Content-Type for FormData, fetch will set it with boundary
+            // Do NOT set Content-Type for FormData
         },
         body: formData,
     });

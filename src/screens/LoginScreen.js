@@ -16,24 +16,29 @@ import { COLORS, SPACING, RADIUS, FONT_SIZES, FONT_WEIGHTS, SHADOWS } from '../c
 import { loginApi } from '../services/api';
 
 export default function LoginScreen({ onLogin }) {
-    const [email, setEmail] = useState('');
+    const [identifier, setIdentifier] = useState('');
     const [password, setPassword] = useState('');
     const [showPassword, setShowPassword] = useState(false);
     const [loading, setLoading] = useState(false);
 
     const handleLogin = async () => {
-        if (!email.trim() || !password.trim()) {
-            Alert.alert('Error', 'Please enter both email and password.');
+        if (!identifier.trim() || !password.trim()) {
+            Alert.alert('Error', 'Please enter both username/email and password.');
             return;
         }
         setLoading(true);
         try {
-            const data = await loginApi(email, password);
+            const data = await loginApi(identifier, password);
             setLoading(false);
-            onLogin({ email, token: data.token });
+            onLogin({ 
+                username: data.username, 
+                email: data.email,
+                token: data.token,
+                is_staff: data.is_staff
+            });
         } catch (err) {
             setLoading(false);
-            Alert.alert('Login Failed', 'Invalid email or password.');
+            Alert.alert('Login Failed', 'Invalid username/email or password.');
         }
     };
 
@@ -60,16 +65,15 @@ export default function LoginScreen({ onLogin }) {
                         <Text style={styles.cardTitle}>Welcome Back</Text>
                         <Text style={styles.cardSubtitle}>Sign in to continue</Text>
 
-                        {/* Email */}
+                        {/* Identifier */}
                         <View style={styles.inputWrapper}>
-                            <Ionicons name="mail-outline" size={18} color={COLORS.textLight} style={styles.inputIcon} />
+                            <Ionicons name="person-outline" size={18} color={COLORS.textLight} style={styles.inputIcon} />
                             <TextInput
                                 style={styles.input}
-                                placeholder="Email address"
+                                placeholder="Username or Email"
                                 placeholderTextColor={COLORS.textLight}
-                                value={email}
-                                onChangeText={setEmail}
-                                keyboardType="email-address"
+                                value={identifier}
+                                onChangeText={setIdentifier}
                                 autoCapitalize="none"
                                 editable={!loading}
                             />
