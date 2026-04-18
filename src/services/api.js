@@ -1,7 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Platform } from 'react-native';
 
-const API_URL = 'http://192.168.0.112:8000/api'; // Using local LAN IP for physical device testing
+const API_URL = 'http://192.168.0.103:8000/api'; // Using local LAN IP for physical device testing
 
 const getAuthHeaders = async () => {
     const token = await AsyncStorage.getItem('sf_token');
