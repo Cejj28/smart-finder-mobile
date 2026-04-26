@@ -1,54 +1,85 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
+import { useFocusEffect } from '@react-navigation/native';
 import {
     View,
     Text,
     FlatList,
     StyleSheet,
     TouchableOpacity,
+    Alert,
+    RefreshControl,
+    ActivityIndicator
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS, SPACING, RADIUS, FONT_SIZES, FONT_WEIGHTS, SHADOWS } from '../constants/theme';
 import StatusBadge from '../components/StatusBadge';
+import ReportDetailsModal from '../components/ReportDetailsModal';
+import EditReportModal from '../components/EditReportModal';
+import { fetchMyItems, deleteItem } from '../services/api';
 
 const FILTERS = ['All', 'Lost', 'Found'];
 
-const myPosts = [
-    {
-        id: 1,
-        type: 'Lost',
-        item: 'Blue Backpack',
-        location: 'Library 2nd Floor',
-        date: '2026-03-05',
-        status: 'Pending Review',
-    },
-    {
-        id: 3,
-        type: 'Lost',
-        item: 'Scientific Calculator',
-        location: 'Room 301',
-        date: '2026-03-04',
-        status: 'Approved',
-    },
-    {
-        id: 6,
-        type: 'Found',
-        item: 'Wireless Earbuds',
-        location: 'Computer Lab',
-        date: '2026-03-03',
-        status: 'Pending Review',
-    },
-];
-
 export default function MyPostsScreen() {
     const [activeFilter, setActiveFilter] = useState('All');
+    const [selectedItem, setSelectedItem] = useState(null);
+    const [editingItem, setEditingItem] = useState(null);
+    const [posts, setPosts] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [refreshing, setRefreshing] = useState(false);
+
+    const loadPosts = async () => {
+        try {
+            const data = await fetchMyItems();
+            setPosts(data);
+        } catch (error) {
+            console.error('Failed to load posts:', error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useFocusEffect(
+        useCallback(() => {
+            loadPosts();
+        }, [])
+    );
+
+    const onRefresh = async () => {
+        setRefreshing(true);
+        await loadPosts();
+        setRefreshing(false);
+    };
+
+    const handleDelete = (id) => {
+        Alert.alert(
+            "Delete Post",
+            "Are you sure you want to delete this post? This cannot be undone.",
+            [
+                { text: "Cancel", style: "cancel" },
+                { 
+                    text: "Delete", 
+                    style: "destructive",
+                    onPress: async () => {
+                        try {
+                            await deleteItem(id);
+                            loadPosts(); // Refresh list after deletion
+                        } catch (error) {
+                            Alert.alert('Error', 'Failed to delete the post.');
+                            console.error(error);
+                        }
+                    }
+                }
+            ]
+        );
+    };
 
     const filteredPosts = activeFilter === 'All'
-        ? myPosts
-        : myPosts.filter((p) => p.type === activeFilter);
+        ? posts
+        : posts.filter((p) => p.type === activeFilter);
 
     const renderItem = ({ item }) => (
-        <View style={styles.postCard}>
+        <TouchableOpacity style={styles.postCard} onPress={() => setSelectedItem(item)} activeOpacity={0.7}>
             <View style={styles.postHeader}>
                 <View style={styles.postIconWrap}>
                     <Ionicons
@@ -63,10 +94,26 @@ export default function MyPostsScreen() {
                 </View>
             </View>
             <View style={styles.postFooter}>
-                <StatusBadge status={item.type} />
-                <StatusBadge status={item.status} />
+                <View style={styles.badgesRow}>
+                    <StatusBadge status={item.type} />
+                    <StatusBadge status={item.status} />
+                </View>
+                <View style={styles.actionsRow}>
+                    <TouchableOpacity 
+                        style={styles.actionBtn} 
+                        onPress={() => setEditingItem(item)}
+                    >
+                        <Ionicons name="pencil" size={20} color={COLORS.primary} />
+                    </TouchableOpacity>
+                    <TouchableOpacity 
+                        style={styles.actionBtn} 
+                        onPress={() => handleDelete(item.id)}
+                    >
+                        <Ionicons name="trash" size={20} color={COLORS.error} />
+                    </TouchableOpacity>
+                </View>
             </View>
-        </View>
+        </TouchableOpacity>
     );
 
     return (
@@ -93,18 +140,49 @@ export default function MyPostsScreen() {
             </View>
 
             {/* Posts List */}
-            <FlatList
-                data={filteredPosts}
-                keyExtractor={(item) => item.id.toString()}
-                renderItem={renderItem}
-                contentContainerStyle={styles.listContent}
-                showsVerticalScrollIndicator={false}
-                ListEmptyComponent={
-                    <View style={styles.emptyState}>
-                        <Ionicons name="document-text-outline" size={48} color={COLORS.textLight} />
-                        <Text style={styles.emptyText}>No posts yet.</Text>
-                    </View>
-                }
+            {loading ? (
+                <View style={styles.loaderContainer}>
+                    <ActivityIndicator size="large" color={COLORS.primary} />
+                </View>
+            ) : (
+                <FlatList
+                    data={filteredPosts}
+                    keyExtractor={(item) => item.id.toString()}
+                    renderItem={renderItem}
+                    contentContainerStyle={styles.listContent}
+                    showsVerticalScrollIndicator={false}
+                    refreshControl={
+                        <RefreshControl
+                            refreshing={refreshing}
+                            onRefresh={onRefresh}
+                            tintColor={COLORS.primary}
+                            colors={[COLORS.primary]}
+                        />
+                    }
+                    ListEmptyComponent={
+                        <View style={styles.emptyState}>
+                            <Ionicons name="document-text-outline" size={48} color={COLORS.textLight} />
+                            <Text style={styles.emptyText}>No posts yet.</Text>
+                        </View>
+                    }
+                />
+            )}
+
+            <ReportDetailsModal 
+                visible={!!selectedItem} 
+                item={selectedItem} 
+                onClose={() => setSelectedItem(null)}
+                showStatus={true}
+            />
+
+            <EditReportModal
+                visible={!!editingItem}
+                item={editingItem}
+                onClose={() => setEditingItem(null)}
+                onSaveSuccess={() => {
+                    setEditingItem(null);
+                    loadPosts();
+                }}
             />
         </SafeAreaView>
     );
@@ -114,6 +192,11 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: COLORS.bgColor,
+    },
+    loaderContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
     },
     header: {
         paddingHorizontal: SPACING.xl,
@@ -200,6 +283,25 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
+        paddingTop: SPACING.sm,
+        borderTopWidth: 1,
+        borderTopColor: COLORS.inputBorder,
+        marginTop: SPACING.sm,
+    },
+    badgesRow: {
+        flexDirection: 'row',
+        gap: SPACING.sm,
+    },
+    actionsRow: {
+        flexDirection: 'row',
+        gap: SPACING.sm,
+    },
+    actionBtn: {
+        padding: SPACING.sm,
+        marginLeft: SPACING.xs,
+        backgroundColor: COLORS.bgColor,
+        borderRadius: RADIUS.full,
+        ...SHADOWS.sm,
     },
     emptyState: {
         alignItems: 'center',

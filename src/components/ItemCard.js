@@ -1,48 +1,61 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS, SPACING, RADIUS, FONT_SIZES, FONT_WEIGHTS, SHADOWS } from '../constants/theme';
 import StatusBadge from './StatusBadge';
 
 export default function ItemCard({ item, onPress }) {
+    const isLost = item.type === 'Lost';
+    const typeColor = isLost ? COLORS.error : COLORS.success;
+
     return (
-        <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.7}>
-            {/* Top accent bar */}
-            <View style={styles.accentBar} />
-
-            <View style={styles.cardContent}>
-                {/* Header Row */}
-                <View style={styles.headerRow}>
-                    <View style={styles.iconContainer}>
-                        <Ionicons
-                            name={item.type === 'Lost' ? 'search-outline' : 'checkmark-circle-outline'}
-                            size={22}
-                            color={COLORS.white}
-                        />
-                    </View>
-                    <View style={styles.headerText}>
-                        <Text style={styles.itemName} numberOfLines={1}>{item.item}</Text>
-                        <Text style={styles.submittedBy}>{item.submittedBy}</Text>
-                    </View>
-                    <StatusBadge status={item.type} />
+        <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.92}>
+            {/* ── Post Header (like FB) ── */}
+            <View style={styles.postHeader}>
+                <View style={[styles.avatarCircle, { backgroundColor: typeColor }]}>
+                    <Ionicons
+                        name={isLost ? 'search-outline' : 'checkmark-circle-outline'}
+                        size={20}
+                        color={COLORS.white}
+                    />
                 </View>
-
-                {/* Details */}
-                <View style={styles.detailsRow}>
-                    <View style={styles.detailItem}>
-                        <Ionicons name="location-outline" size={14} color={COLORS.textLight} />
-                        <Text style={styles.detailText}>{item.location}</Text>
-                    </View>
-                    <View style={styles.detailItem}>
-                        <Ionicons name="calendar-outline" size={14} color={COLORS.textLight} />
-                        <Text style={styles.detailText}>{item.date}</Text>
-                    </View>
+                <View style={styles.headerText}>
+                    <Text style={styles.itemName} numberOfLines={1}>{item.item}</Text>
+                    <Text style={styles.submittedBy}>
+                        {item.submittedBy} · {item.date}
+                    </Text>
                 </View>
+                <StatusBadge status={item.type} />
+            </View>
 
-                {/* Status Footer */}
-                <View style={styles.footer}>
-                    <StatusBadge status={item.status} />
+            {/* ── Description preview ── */}
+            {item.description ? (
+                <Text style={styles.descriptionPreview} numberOfLines={2}>
+                    {item.description}
+                </Text>
+            ) : null}
+
+            {/* ── Full-width photo ── */}
+            {item.image_url ? (
+                <Image
+                    source={{ uri: item.image_url }}
+                    style={styles.postImage}
+                    resizeMode="cover"
+                />
+            ) : (
+                <View style={styles.noImagePlaceholder}>
+                    <Ionicons name="image-outline" size={36} color={COLORS.textLight} />
+                    <Text style={styles.noImageText}>No photo</Text>
                 </View>
+            )}
+
+            {/* ── Footer info ── */}
+            <View style={styles.footer}>
+                <View style={styles.footerItem}>
+                    <Ionicons name="location-outline" size={14} color={COLORS.textLight} />
+                    <Text style={styles.footerText} numberOfLines={1}>{item.location}</Text>
+                </View>
+                <Text style={styles.tapHint}>Tap for details</Text>
             </View>
         </TouchableOpacity>
     );
@@ -58,30 +71,22 @@ const styles = StyleSheet.create({
         borderColor: COLORS.primaryLight,
         overflow: 'hidden',
     },
-    accentBar: {
-        height: 4,
-        backgroundColor: COLORS.primary,
-    },
-    cardContent: {
-        padding: SPACING.lg,
-    },
-    headerRow: {
+    postHeader: {
         flexDirection: 'row',
         alignItems: 'center',
-        marginBottom: SPACING.md,
+        padding: SPACING.lg,
+        paddingBottom: SPACING.sm,
+        gap: SPACING.md,
     },
-    iconContainer: {
-        width: 40,
-        height: 40,
-        borderRadius: RADIUS.md,
-        backgroundColor: COLORS.primary,
+    avatarCircle: {
+        width: 42,
+        height: 42,
+        borderRadius: 21,
         alignItems: 'center',
         justifyContent: 'center',
-        marginRight: SPACING.md,
     },
     headerText: {
         flex: 1,
-        marginRight: SPACING.sm,
     },
     itemName: {
         fontSize: FONT_SIZES.lg,
@@ -89,26 +94,57 @@ const styles = StyleSheet.create({
         color: COLORS.textDark,
     },
     submittedBy: {
-        fontSize: FONT_SIZES.sm,
-        color: COLORS.textMedium,
+        fontSize: FONT_SIZES.xs,
+        color: COLORS.textLight,
         marginTop: 2,
     },
-    detailsRow: {
-        flexDirection: 'row',
-        gap: SPACING.lg,
-        marginBottom: SPACING.md,
+    descriptionPreview: {
+        fontSize: FONT_SIZES.sm,
+        color: COLORS.textMedium,
+        paddingHorizontal: SPACING.lg,
+        paddingBottom: SPACING.sm,
+        lineHeight: 20,
     },
-    detailItem: {
-        flexDirection: 'row',
+    postImage: {
+        width: '100%',
+        height: 220,
+        backgroundColor: COLORS.bgColor,
+    },
+    noImagePlaceholder: {
+        width: '100%',
+        height: 120,
+        backgroundColor: COLORS.bgColor,
         alignItems: 'center',
-        gap: 4,
+        justifyContent: 'center',
+        gap: SPACING.xs,
     },
-    detailText: {
+    noImageText: {
         fontSize: FONT_SIZES.sm,
         color: COLORS.textLight,
     },
     footer: {
         flexDirection: 'row',
-        justifyContent: 'flex-end',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        paddingHorizontal: SPACING.lg,
+        paddingVertical: SPACING.md,
+        borderTopWidth: 1,
+        borderTopColor: COLORS.border,
+    },
+    footerItem: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 4,
+        flex: 1,
+    },
+    footerText: {
+        fontSize: FONT_SIZES.sm,
+        color: COLORS.textLight,
+        flex: 1,
+    },
+    tapHint: {
+        fontSize: FONT_SIZES.xs,
+        color: COLORS.primary,
+        fontWeight: FONT_WEIGHTS.semibold,
     },
 });

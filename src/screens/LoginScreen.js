@@ -14,12 +14,18 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS, SPACING, RADIUS, FONT_SIZES, FONT_WEIGHTS, SHADOWS } from '../constants/theme';
 import { loginApi } from '../services/api';
+import RegisterScreen from './RegisterScreen';
 
 export default function LoginScreen({ onLogin }) {
     const [identifier, setIdentifier] = useState('');
     const [password, setPassword] = useState('');
     const [showPassword, setShowPassword] = useState(false);
     const [loading, setLoading] = useState(false);
+    const [showRegister, setShowRegister] = useState(false);
+
+    if (showRegister) {
+        return <RegisterScreen onLogin={onLogin} onBack={() => setShowRegister(false)} />;
+    }
 
     const handleLogin = async () => {
         if (!identifier.trim() || !password.trim()) {
@@ -109,6 +115,14 @@ export default function LoginScreen({ onLogin }) {
                         >
                             <Text style={styles.loginBtnText}>
                                 {loading ? 'Signing in...' : 'Sign In'}
+                            </Text>
+                        </TouchableOpacity>
+
+                        {/* Create Account Link */}
+                        <TouchableOpacity style={styles.registerLink} onPress={() => setShowRegister(true)}>
+                            <Text style={styles.registerLinkText}>
+                                Don't have an account?{' '}
+                                <Text style={styles.registerLinkBold}>Create one</Text>
                             </Text>
                         </TouchableOpacity>
 
@@ -215,10 +229,22 @@ const styles = StyleSheet.create({
         textAlign: 'center',
         fontSize: FONT_SIZES.xs,
         color: 'rgba(255, 255, 255, 0.3)',
-        marginTop: SPACING.xxl,
-        paddingTop: SPACING.lg,
+        marginTop: SPACING.lg,
+        paddingTop: SPACING.md,
         borderTopWidth: 1,
         borderTopColor: 'rgba(255, 255, 255, 0.08)',
+    },
+    registerLink: {
+        alignItems: 'center',
+        paddingVertical: SPACING.lg,
+    },
+    registerLinkText: {
+        fontSize: FONT_SIZES.sm,
+        color: 'rgba(255, 255, 255, 0.45)',
+    },
+    registerLinkBold: {
+        color: COLORS.primary,
+        fontWeight: FONT_WEIGHTS.bold,
     },
     shape1: {
         position: 'absolute',

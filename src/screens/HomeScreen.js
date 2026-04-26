@@ -11,12 +11,14 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS, SPACING, RADIUS, FONT_SIZES, FONT_WEIGHTS, SHADOWS } from '../constants/theme';
 import ItemCard from '../components/ItemCard';
+import ReportDetailsModal from '../components/ReportDetailsModal';
 import { fetchItems } from '../services/api';
 
 export default function HomeScreen() {
     const [searchTerm, setSearchTerm] = useState('');
     const [refreshing, setRefreshing] = useState(false);
     const [items, setItems] = useState([]);
+    const [selectedItem, setSelectedItem] = useState(null);
 
     const loadData = async () => {
         try {
@@ -101,7 +103,7 @@ export default function HomeScreen() {
             <FlatList
                 data={filteredItems}
                 keyExtractor={(item) => item.id.toString()}
-                renderItem={({ item }) => <ItemCard item={item} />}
+                renderItem={({ item }) => <ItemCard item={item} onPress={() => setSelectedItem(item)} />}
                 contentContainerStyle={styles.listContent}
                 showsVerticalScrollIndicator={false}
                 refreshControl={
@@ -118,6 +120,12 @@ export default function HomeScreen() {
                         <Text style={styles.emptyText}>No items found.</Text>
                     </View>
                 }
+            />
+
+            <ReportDetailsModal 
+                visible={!!selectedItem} 
+                item={selectedItem} 
+                onClose={() => setSelectedItem(null)} 
             />
         </SafeAreaView>
     );
