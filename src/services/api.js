@@ -2,8 +2,12 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Platform } from 'react-native';
 
 const API_URL = __DEV__ 
-    ? 'https://smart-finder-django.onrender.com/api' // Temporarily pointed to deployed backend for testing
+    ? 'http://192.168.1.100:8000/api' // Use your local IP for testing
     : 'https://smart-finder-django.onrender.com/api'; // Production deployment URL
+
+const FASTAPI_URL = __DEV__
+    ? 'http://192.168.1.100:8001' // Use your local IP for testing
+    : 'https://smart-finder-fastapi.onrender.com';
 
 const getAuthHeaders = async () => {
     const token = await AsyncStorage.getItem('sf_token');
@@ -53,6 +57,7 @@ export const fetchItems = async () => {
         submittedBy: item.reporter_username || 'Admin',
         date: new Date(item.created_at).toLocaleDateString(),
         description: item.description,
+        category: item.category,
         // Ensure image_url is formatted for mobile display
         image_url: (item.image && typeof item.image === 'string') 
             ? (item.image.startsWith('http') ? item.image : `${BASE_SERVER_URL}${item.image}`)
@@ -96,6 +101,7 @@ export const fetchMyItems = async () => {
         date: new Date(item.created_at).toLocaleDateString(),
         description: item.description,
         contact_info: item.contact_info,
+        category: item.category,
         image_url: (item.image && typeof item.image === 'string') 
             ? (item.image.startsWith('http') ? item.image : `${BASE_SERVER_URL}${item.image}`)
             : null,
@@ -130,4 +136,39 @@ export const updateItem = async (id, data) => {
         throw new Error(JSON.stringify(errorData) || 'Failed to update item');
     }
     return await response.json();
+};
+
+export const predictCategory = async (item_name, description = '') => {
+    const headers = await getAuthHeaders();
+    const response = await fetch(`${FASTAPI_URL}/predict/category`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({ item_name, description })
+    });
+    if (!response.ok) throw new Error('Failed to predict category');
+    return await response.json();
+};
+
+export const getMatches = async (itemId) => {
+    const headers = await getAuthHeaders();
+    const response = await fetch(`${API_URL}/items/${itemId}/matches/`, { headers });
+    if (!response.ok) throw new Error('Failed to get matches');
+    const data = await response.json();
+    
+    const BASE_SERVER_URL = API_URL.replace('/api', '');
+
+    return data.map(item => ({
+        id: item.id,
+        type: item.type,
+        item: item.item_name,
+        location: item.location,
+        submittedBy: item.reporter_username || 'Admin',
+        date: new Date(item.created_at).toLocaleDateString(),
+        description: item.description,
+        contact_info: item.contact_info,
+        image_url: (item.image && typeof item.image === 'string') 
+            ? (item.image.startsWith('http') ? item.image : `${BASE_SERVER_URL}${item.image}`)
+            : null,
+        status: item.status || 'Pending Review'
+    }));
 };

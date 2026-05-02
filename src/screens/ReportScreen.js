@@ -16,8 +16,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import { COLORS, SPACING, RADIUS, FONT_SIZES, FONT_WEIGHTS, SHADOWS } from '../constants/theme';
-import { initModel, isModelReady, analyzeImage } from '../services/imageAnalyzer';
-import { createItem } from '../services/api';
+import { createItem, predictCategory, getMatches } from '../services/api';
 
 const REPORT_TYPES = ['Lost', 'Found'];
 
@@ -31,52 +30,39 @@ export default function ReportScreen() {
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     // ML states
-    const [modelLoading, setModelLoading] = useState(true);
-    const [analyzing, setAnalyzing] = useState(false);
-    const [tags, setTags] = useState([]);
+    const [prediction, setPrediction] = useState(null);
+    const [isPredicting, setIsPredicting] = useState(false);
+    const predictionTimer = React.useRef(null);
 
-    /* ── Load ML model on mount ── */
+    /* ── Run ML Text analysis ── */
     useEffect(() => {
-        (async () => {
-            try {
-                await initModel();
-            } catch (e) {
-                console.warn('ML init failed:', e);
-            } finally {
-                setModelLoading(false);
-            }
-        })();
-    }, []);
-
-    /* ── Run ML analysis whenever a new image is set ── */
-    const runAnalysis = async (uri) => {
-        if (!isModelReady()) return;
-        setAnalyzing(true);
-        try {
-            const { labels, colors } = await analyzeImage(uri);
-            setTags([...labels, ...colors.map((c) => `${c}`)]);
-
-            // Auto-fill description if empty
-            if (!description.trim()) {
-                const parts = [];
-                if (labels.length) parts.push(labels.join(', '));
-                if (colors.length) parts.push(`Colors: ${colors.join(', ')}`);
-                if (parts.length) setDescription(parts.join(' — '));
-            }
-        } catch (e) {
-            console.warn('Image analysis failed:', e);
-        } finally {
-            setAnalyzing(false);
+        if (!itemName.trim() && !description.trim()) {
+            setPrediction(null);
+            return;
         }
-    };
+
+        if (predictionTimer.current) clearTimeout(predictionTimer.current);
+
+        setIsPredicting(true);
+        predictionTimer.current = setTimeout(async () => {
+            try {
+                const result = await predictCategory(itemName, description);
+                setPrediction(result);
+            } catch (e) {
+                console.warn('Prediction failed:', e);
+            } finally {
+                setIsPredicting(false);
+            }
+        }, 800); // 800ms debounce
+
+        return () => clearTimeout(predictionTimer.current);
+    }, [itemName, description]);
 
     /* ── Image handlers ── */
     const handleImageResult = (result) => {
         if (!result.canceled) {
             const uri = result.assets[0].uri;
             setImage(uri);
-            setTags([]);          // clear old tags
-            runAnalysis(uri);     // trigger ML
         }
     };
 
@@ -110,7 +96,6 @@ export default function ReportScreen() {
 
     const removeImage = () => {
         setImage(null);
-        setTags([]);
     };
 
     /* ── Form ── */
@@ -128,6 +113,9 @@ export default function ReportScreen() {
             formData.append('location', location);
             formData.append('description', description);
             formData.append('contact_info', contactInfo);
+            if (prediction?.category) {
+                formData.append('category', prediction.category);
+            }
 
             if (image) {
                 const filename = image.split('/').pop();
@@ -140,7 +128,22 @@ export default function ReportScreen() {
                 });
             }
 
-            await createItem(formData);
+            const createdItem = await createItem(formData);
+
+            // Fetch smart matches right away
+            try {
+                const matches = await getMatches(createdItem.id);
+                if (matches.length > 0) {
+                    Alert.alert(
+                        'Matches Found! 🤖',
+                        `We found ${matches.length} potential matches for your ${type.toLowerCase()} item based on AI analysis. Check your notifications or feed to view them!`,
+                        [{ text: 'Awesome!', onPress: resetForm }]
+                    );
+                    return;
+                }
+            } catch (err) {
+                console.warn('Match fetching failed', err);
+            }
 
             Alert.alert(
                 'Report Submitted!',
@@ -224,26 +227,6 @@ export default function ReportScreen() {
                                     <Ionicons name="close" size={16} color={COLORS.white} />
                                 </TouchableOpacity>
 
-                                {/* Analysing overlay */}
-                                {analyzing && (
-                                    <View style={styles.analyzingOverlay}>
-                                        <ActivityIndicator size="small" color={COLORS.white} />
-                                        <Text style={styles.analyzingText}>Analyzing image…</Text>
-                                    </View>
-                                )}
-
-                                {/* ML Tags */}
-                                {!analyzing && tags.length > 0 && (
-                                    <View style={styles.tagsRow}>
-                                        <Ionicons name="sparkles" size={14} color={COLORS.primary} />
-                                        {tags.map((tag, i) => (
-                                            <View key={i} style={styles.tagChip}>
-                                                <Text style={styles.tagText}>{tag}</Text>
-                                            </View>
-                                        ))}
-                                    </View>
-                                )}
-
                                 <View style={styles.retakeRow}>
                                     <TouchableOpacity style={styles.retakeBtn} onPress={takePhoto} activeOpacity={0.7}>
                                         <Ionicons name="camera-outline" size={16} color={COLORS.primary} />
@@ -272,13 +255,7 @@ export default function ReportScreen() {
                             </View>
                         )}
 
-                        {/* ML status badge */}
-                        {modelLoading && (
-                            <View style={styles.mlStatusRow}>
-                                <ActivityIndicator size="small" color={COLORS.textLight} />
-                                <Text style={styles.mlStatusText}>Loading AI model…</Text>
-                            </View>
-                        )}
+
 
                         {/* Item Name */}
                         <Text style={styles.label}>Item Name *</Text>
@@ -306,7 +283,7 @@ export default function ReportScreen() {
                             />
                         </View>
 
-                        {/* Description (auto-filled by ML) */}
+                        {/* Description */}
                         <Text style={styles.label}>Description</Text>
                         <View style={[styles.inputWrapper, { alignItems: 'flex-start' }]}>
                             <Ionicons name="document-text-outline" size={18} color={COLORS.textLight} style={[styles.inputIcon, { marginTop: 12 }]} />
@@ -321,10 +298,25 @@ export default function ReportScreen() {
                                 textAlignVertical="top"
                             />
                         </View>
-                        {tags.length > 0 && (
-                            <Text style={styles.autoFillHint}>
-                                ✨ Description auto-filled by AI — feel free to edit
-                            </Text>
+                        
+                        {/* Text AI Prediction Badge */}
+                        {(prediction || isPredicting) && (
+                            <View style={styles.predictionBadge}>
+                                <Text style={{ fontSize: 18 }}>🤖</Text>
+                                {isPredicting ? (
+                                    <Text style={styles.predictionText}>AI is analyzing...</Text>
+                                ) : (
+                                    <View style={styles.predictionRow}>
+                                        <Text style={styles.predictionText}>AI Suggests:</Text>
+                                        <View style={styles.predictionChip}>
+                                            <Text style={styles.predictionChipText}>{prediction.category}</Text>
+                                        </View>
+                                        <Text style={styles.predictionConfidence}>
+                                            ({Math.round(prediction.confidence * 100)}% Match)
+                                        </Text>
+                                    </View>
+                                )}
+                            </View>
                         )}
 
                         {/* Contact */}
@@ -506,44 +498,43 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'center',
     },
-    analyzingOverlay: {
-        position: 'absolute',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        backgroundColor: 'rgba(0,0,0,0.45)',
-        alignItems: 'center',
-        justifyContent: 'center',
+    predictionBadge: {
         flexDirection: 'row',
+        alignItems: 'center',
         gap: SPACING.sm,
-    },
-    analyzingText: {
-        color: COLORS.white,
-        fontSize: FONT_SIZES.sm,
-        fontWeight: FONT_WEIGHTS.semibold,
-    },
-    tagsRow: {
-        flexDirection: 'row',
-        flexWrap: 'wrap',
-        gap: SPACING.xs,
+        marginTop: SPACING.sm,
         padding: SPACING.sm,
-        paddingHorizontal: SPACING.md,
-        alignItems: 'center',
         backgroundColor: COLORS.primaryLight,
-    },
-    tagChip: {
-        backgroundColor: COLORS.white,
-        paddingHorizontal: SPACING.sm,
-        paddingVertical: 3,
-        borderRadius: RADIUS.full,
+        borderRadius: RADIUS.md,
         borderWidth: 1,
         borderColor: COLORS.primary,
     },
-    tagText: {
-        fontSize: FONT_SIZES.xs,
+    predictionRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        flexWrap: 'wrap',
+        gap: SPACING.xs,
+    },
+    predictionText: {
+        fontSize: FONT_SIZES.sm,
         fontWeight: FONT_WEIGHTS.semibold,
         color: COLORS.primary,
+    },
+    predictionChip: {
+        backgroundColor: COLORS.primary,
+        paddingHorizontal: SPACING.sm,
+        paddingVertical: 2,
+        borderRadius: RADIUS.sm,
+    },
+    predictionChipText: {
+        fontSize: FONT_SIZES.xs,
+        fontWeight: FONT_WEIGHTS.bold,
+        color: COLORS.white,
+    },
+    predictionConfidence: {
+        fontSize: FONT_SIZES.xs,
+        color: COLORS.textMedium,
+        fontStyle: 'italic',
     },
     retakeRow: {
         flexDirection: 'row',
@@ -564,22 +555,6 @@ const styles = StyleSheet.create({
         fontSize: FONT_SIZES.sm,
         fontWeight: FONT_WEIGHTS.semibold,
         color: COLORS.primary,
-    },
-    mlStatusRow: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: SPACING.sm,
-        marginTop: SPACING.sm,
-    },
-    mlStatusText: {
-        fontSize: FONT_SIZES.xs,
-        color: COLORS.textLight,
-    },
-    autoFillHint: {
-        fontSize: FONT_SIZES.xs,
-        color: COLORS.primary,
-        marginTop: SPACING.xs,
-        fontStyle: 'italic',
     },
 
     submitBtn: {

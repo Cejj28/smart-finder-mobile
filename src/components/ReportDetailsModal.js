@@ -1,12 +1,34 @@
-import React from 'react';
-import { View, Text, StyleSheet, Modal, TouchableOpacity, Image, ScrollView } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, Modal, TouchableOpacity, Image, ScrollView, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { getMatches } from '../services/api';
 import { COLORS, SPACING, RADIUS, FONT_SIZES, FONT_WEIGHTS, SHADOWS } from '../constants/theme';
 import StatusBadge from './StatusBadge';
 
 // showStatus=false hides the Approval status row (used in public feed)
 // showStatus=true shows it (used in My Posts where status matters)
 export default function ReportDetailsModal({ visible, item, onClose, showStatus = false }) {
+    const [matches, setMatches] = useState([]);
+    const [loadingMatches, setLoadingMatches] = useState(false);
+
+    useEffect(() => {
+        if (visible && item?.id && item?.category) {
+            (async () => {
+                setLoadingMatches(true);
+                try {
+                    const data = await getMatches(item.id);
+                    setMatches(data);
+                } catch (e) {
+                    console.warn('Matches fetch failed:', e);
+                } finally {
+                    setLoadingMatches(false);
+                }
+            })();
+        } else {
+            setMatches([]);
+        }
+    }, [visible, item]);
+
     if (!item) return null;
 
     return (
@@ -60,6 +82,17 @@ export default function ReportDetailsModal({ visible, item, onClose, showStatus 
                                 </View>
                             )}
 
+                            {/* Category badge */}
+                            {item.category ? (
+                                <View style={styles.detailRow}>
+                                    <Text style={styles.label}>Category</Text>
+                                    <View style={styles.categoryChip}>
+                                        <Ionicons name="sparkles" size={12} color={COLORS.primary} />
+                                        <Text style={styles.categoryText}>{item.category}</Text>
+                                    </View>
+                                </View>
+                            ) : null}
+
                             <View style={styles.divider} />
 
                             <View style={styles.infoGroup}>
@@ -90,6 +123,37 @@ export default function ReportDetailsModal({ visible, item, onClose, showStatus 
                             <Text style={styles.descriptionText}>
                                 {item.description || 'No description provided.'}
                             </Text>
+
+                            {/* Smart Matches Section */}
+                            {(loadingMatches || matches.length > 0) && (
+                                <>
+                                    <View style={styles.divider} />
+                                    <View style={styles.matchHeader}>
+                                        <Text style={styles.matchTitle}>🤖 AI Smart Matches</Text>
+                                        {loadingMatches && <ActivityIndicator size="small" color={COLORS.primary} />}
+                                    </View>
+                                    <Text style={styles.matchSubtitle}>Items that might be related based on AI category analysis:</Text>
+                                    
+                                    <View style={styles.matchList}>
+                                        {matches.map((match) => (
+                                            <View key={match.id} style={styles.matchCard}>
+                                                <View style={styles.matchIconWrap}>
+                                                    <Ionicons 
+                                                        name={match.type === 'Lost' ? 'search' : 'checkmark-circle'} 
+                                                        size={16} 
+                                                        color={match.type === 'Lost' ? COLORS.error : COLORS.success} 
+                                                    />
+                                                </View>
+                                                <View style={styles.matchInfo}>
+                                                    <Text style={styles.matchItemName} numberOfLines={1}>{match.item}</Text>
+                                                    <Text style={styles.matchLocation} numberOfLines={1}>{match.location}</Text>
+                                                </View>
+                                                <Ionicons name="chevron-forward" size={16} color={COLORS.textLight} />
+                                            </View>
+                                        ))}
+                                    </View>
+                                </>
+                            )}
                         </View>
                     </ScrollView>
                 </View>
@@ -190,5 +254,69 @@ const styles = StyleSheet.create({
         color: COLORS.textMedium,
         lineHeight: 24,
         marginTop: SPACING.xs,
+    },
+    categoryChip: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 4,
+        backgroundColor: COLORS.primaryLight,
+        paddingHorizontal: SPACING.sm,
+        paddingVertical: 4,
+        borderRadius: RADIUS.sm,
+    },
+    categoryText: {
+        fontSize: FONT_SIZES.xs,
+        fontWeight: FONT_WEIGHTS.bold,
+        color: COLORS.primary,
+        textTransform: 'uppercase',
+    },
+    matchHeader: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        marginBottom: SPACING.xs,
+    },
+    matchTitle: {
+        fontSize: FONT_SIZES.md,
+        fontWeight: FONT_WEIGHTS.bold,
+        color: COLORS.primary,
+    },
+    matchSubtitle: {
+        fontSize: FONT_SIZES.xs,
+        color: COLORS.textLight,
+        marginBottom: SPACING.md,
+    },
+    matchList: {
+        gap: SPACING.sm,
+    },
+    matchCard: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        padding: SPACING.sm,
+        backgroundColor: COLORS.cardBg,
+        borderRadius: RADIUS.md,
+        borderWidth: 1,
+        borderColor: COLORS.border,
+    },
+    matchIconWrap: {
+        width: 32,
+        height: 32,
+        borderRadius: 16,
+        backgroundColor: COLORS.bgColor,
+        alignItems: 'center',
+        justifyContent: 'center',
+        marginRight: SPACING.sm,
+    },
+    matchInfo: {
+        flex: 1,
+    },
+    matchItemName: {
+        fontSize: FONT_SIZES.sm,
+        fontWeight: FONT_WEIGHTS.semibold,
+        color: COLORS.textDark,
+    },
+    matchLocation: {
+        fontSize: FONT_SIZES.xs,
+        color: COLORS.textLight,
     },
 });
