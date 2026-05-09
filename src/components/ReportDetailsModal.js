@@ -169,19 +169,21 @@ export default function ReportDetailsModal({ visible, item, onClose, showStatus 
                                     </View>
                                 </>
                             )}
-                            
-                            {/* Claim Button for Found items */}
-                            {item.type === 'Found' && (
-                                <TouchableOpacity 
-                                    style={styles.claimButton}
-                                    onPress={() => setClaimModalVisible(true)}
-                                >
-                                    <Ionicons name="hand-right" size={20} color={COLORS.white} />
-                                    <Text style={styles.claimButtonText}>Claim This Item</Text>
-                                </TouchableOpacity>
-                            )}
                         </View>
                     </ScrollView>
+
+                    {/* Sticky Claim Button Footer for Found items */}
+                    {item.type === 'Found' && (
+                        <View style={styles.footer}>
+                            <TouchableOpacity 
+                                style={styles.claimButton}
+                                onPress={() => setClaimModalVisible(true)}
+                            >
+                                <Ionicons name="hand-right" size={20} color={COLORS.white} />
+                                <Text style={styles.claimButtonText}>Claim This Item</Text>
+                            </TouchableOpacity>
+                        </View>
+                    )}
                 </View>
             </View>
 
@@ -365,6 +367,12 @@ const styles = StyleSheet.create({
         fontSize: FONT_SIZES.xs,
         color: COLORS.textLight,
     },
+    footer: {
+        padding: SPACING.lg,
+        borderTopWidth: 1,
+        borderTopColor: COLORS.border,
+        backgroundColor: COLORS.white,
+    },
     claimButton: {
         backgroundColor: COLORS.primary,
         flexDirection: 'row',
@@ -372,7 +380,6 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         padding: SPACING.md,
         borderRadius: RADIUS.md,
-        marginTop: SPACING.xl,
         gap: SPACING.sm,
         ...SHADOWS.md,
     },

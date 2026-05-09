@@ -34,7 +34,10 @@ export default function ClaimModal({ visible, item, onClose }) {
                 proof: proof.trim(),
                 contact_info: contact.trim(),
             });
-            Alert.alert('Success', 'Your claim has been submitted and is pending review.');
+            Alert.alert(
+                'Success', 
+                'Your claim has been submitted! Please go to the admin office to validate your claim in person.'
+            );
             setProof('');
             setContact('');
             onClose();
