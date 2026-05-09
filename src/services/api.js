@@ -85,8 +85,15 @@ export const createItem = async (formData) => {
     });
 
     if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(JSON.stringify(errorData) || 'Failed to create item');
+        const contentType = response.headers.get('content-type');
+        if (contentType && contentType.includes('application/json')) {
+            const errorData = await response.json();
+            throw new Error(JSON.stringify(errorData) || 'Failed to create item');
+        } else {
+            const errorText = await response.text();
+            console.error('Server error (HTML):', errorText);
+            throw new Error(`Server returned error ${response.status}. Check backend logs.`);
+        }
     }
     return await response.json();
 };
