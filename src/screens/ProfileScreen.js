@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
     View,
     Text,
@@ -6,12 +6,14 @@ import {
     ScrollView,
     TouchableOpacity,
     Alert,
+    RefreshControl,
 } from 'react-native';
 import { View as SafeAreaView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS, SPACING, RADIUS, FONT_SIZES, FONT_WEIGHTS, SHADOWS } from '../constants/theme';
 import MyClaimsModal from '../components/MyClaimsModal';
-import { fetchMyClaims, fetchMyItems } from '../services/api';
+import { EditProfileModal, ChangePasswordModal } from '../components/ProfileModals';
+import { fetchMyClaims, fetchMyItems, fetchProfile } from '../services/api';
 
 const MENU_ITEMS = [
     { id: 'claims', icon: 'document-text-outline', label: 'My Claims', color: COLORS.primary },
@@ -20,25 +22,42 @@ const MENU_ITEMS = [
 ];
 
 export default function ProfileScreen({ onLogout }) {
-    const [myClaimsVisible, setMyClaimsVisible] = useState(false);
+    const [profile, setProfile] = useState(null);
     const [stats, setStats] = useState({ reports: 0, claims: 0, found: 0 });
+    const [refreshing, setRefreshing] = useState(false);
+    
+    // Modal states
+    const [myClaimsVisible, setMyClaimsVisible] = useState(false);
+    const [editProfileVisible, setEditProfileVisible] = useState(false);
+    const [changePwdVisible, setChangePwdVisible] = useState(false);
+
+    const loadData = useCallback(async () => {
+        try {
+            const [p, claims, items] = await Promise.all([
+                fetchProfile(),
+                fetchMyClaims(),
+                fetchMyItems()
+            ]);
+            setProfile(p);
+            setStats({
+                reports: items.length,
+                claims: claims.length,
+                found: items.filter(i => i.type === 'Found').length
+            });
+        } catch (err) {
+            console.error("Failed to load profile data", err);
+        }
+    }, []);
 
     useEffect(() => {
-        const loadStats = async () => {
-            try {
-                const claims = await fetchMyClaims();
-                const items = await fetchMyItems();
-                setStats({
-                    reports: items.length,
-                    claims: claims.length,
-                    found: items.filter(i => i.type === 'Found').length
-                });
-            } catch (err) {
-                console.error("Failed to load stats", err);
-            }
-        };
-        loadStats();
-    }, []);
+        loadData();
+    }, [loadData]);
+
+    const onRefresh = async () => {
+        setRefreshing(true);
+        await loadData();
+        setRefreshing(false);
+    };
 
     const handleLogout = () => {
         Alert.alert('Log Out', 'Are you sure you want to log out?', [
@@ -48,14 +67,20 @@ export default function ProfileScreen({ onLogout }) {
     };
 
     const handleMenuPress = (id) => {
-        if (id === 'claims') {
-            setMyClaimsVisible(true);
-        }
+        if (id === 'claims') setMyClaimsVisible(true);
+        else if (id === 'edit') setEditProfileVisible(true);
+        else if (id === 'password') setChangePwdVisible(true);
     };
 
     return (
         <SafeAreaView style={styles.container}>
-            <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+            <ScrollView 
+                contentContainerStyle={styles.scrollContent} 
+                showsVerticalScrollIndicator={false}
+                refreshControl={
+                    <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[COLORS.primary]} />
+                }
+            >
                 {/* Header */}
                 <View style={styles.header}>
                     <Text style={styles.title}>Profile</Text>
@@ -69,8 +94,8 @@ export default function ProfileScreen({ onLogout }) {
                             <Ionicons name="person" size={40} color={COLORS.white} />
                         </View>
                     </View>
-                    <Text style={styles.userName}>Juan Dela Cruz</Text>
-                    <Text style={styles.userEmail}>juan.delacruz@email.com</Text>
+                    <Text style={styles.userName}>{profile?.full_name || profile?.username || 'Loading...'}</Text>
+                    <Text style={styles.userEmail}>{profile?.email || '...'}</Text>
                     <View style={styles.statsContainer}>
                         <View style={styles.profileStat}>
                             <Text style={styles.profileStatNumber}>{stats.reports}</Text>
@@ -120,6 +145,20 @@ export default function ProfileScreen({ onLogout }) {
             <MyClaimsModal 
                 visible={myClaimsVisible} 
                 onClose={() => setMyClaimsVisible(false)} 
+            />
+
+            {profile && (
+                <EditProfileModal 
+                    visible={editProfileVisible} 
+                    onClose={() => setEditProfileVisible(false)} 
+                    profile={profile}
+                    onUpdate={(updated) => setProfile(updated)}
+                />
+            )}
+
+            <ChangePasswordModal 
+                visible={changePwdVisible} 
+                onClose={() => setChangePwdVisible(false)} 
             />
         </SafeAreaView>
     );

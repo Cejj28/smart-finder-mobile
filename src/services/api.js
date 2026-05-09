@@ -232,7 +232,39 @@ export const markNotificationRead = async (id) => {
     if (!response.ok) throw new Error('Failed to mark notification as read');
     return await response.json();
 };
+// ─── PROFILE ──────────────────────────────────────────────────────────────────
 
+export const fetchProfile = async () => {
+    const headers = await getAuthHeaders();
+    const response = await fetch(`${API_URL}/profile/me/`, { headers });
+    if (!response.ok) throw new Error('Failed to fetch profile');
+    return await response.json();
+};
+
+export const updateProfile = async (data) => {
+    const headers = await getAuthHeaders();
+    const response = await fetch(`${API_URL}/profile/me/`, {
+        method: 'PATCH',
+        headers,
+        body: JSON.stringify(data),
+    });
+    if (!response.ok) throw new Error('Failed to update profile');
+    return await response.json();
+};
+
+export const changePassword = async (data) => {
+    const headers = await getAuthHeaders();
+    const response = await fetch(`${API_URL}/profile/change-password/`, {
+        method: 'PUT',
+        headers,
+        body: JSON.stringify(data),
+    });
+    if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(JSON.stringify(errorData) || 'Failed to change password');
+    }
+    return await response.json();
+};
 export const markAllNotificationsRead = async () => {
     const headers = await getAuthHeaders();
     const response = await fetch(`${API_URL}/notifications/mark_all_read/`, {
