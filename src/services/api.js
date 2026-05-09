@@ -216,7 +216,10 @@ export const fetchMyClaims = async () => {
 export const fetchNotifications = async () => {
     const headers = await getAuthHeaders();
     const response = await fetch(`${API_URL}/notifications/`, { headers });
-    if (!response.ok) throw new Error('Failed to fetch notifications');
+    if (!response.ok) {
+        console.error(`Notification fetch failed with status: ${response.status}`);
+        throw new Error(`Failed to fetch notifications (Status: ${response.status})`);
+    }
     return await response.json();
 };
 
