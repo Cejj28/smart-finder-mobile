@@ -1,13 +1,20 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Platform } from 'react-native';
 
-const API_URL = __DEV__ 
-    ? 'http://192.168.1.100:8000/api' // Use your local IP for testing
-    : 'https://smart-finder-django.onrender.com/api'; // Production deployment URL
+const USE_DEPLOYED = true; // Toggle this to switch between local and deployed backend
 
-const FASTAPI_URL = __DEV__
-    ? 'http://192.168.1.100:8001' // Use your local IP for testing
-    : 'https://smart-finder-fastapi.onrender.com';
+const API_URL = USE_DEPLOYED
+    ? 'https://smart-finder-django.onrender.com/api'
+    : (__DEV__ 
+        ? 'http://192.168.1.100:8000/api' // Use your local IP for testing
+        : 'https://smart-finder-django.onrender.com/api');
+
+const FASTAPI_URL = USE_DEPLOYED
+    ? 'https://smart-finder-fastapi.onrender.com'
+    : (__DEV__
+        ? 'http://192.168.1.100:8001' // Use your local IP for testing
+        : 'https://smart-finder-fastapi.onrender.com');
+
 
 const getAuthHeaders = async () => {
     const token = await AsyncStorage.getItem('sf_token');
@@ -171,4 +178,24 @@ export const getMatches = async (itemId) => {
             : null,
         status: item.status || 'Pending Review'
     }));
+};
+
+// ─── CLAIMS ───────────────────────────────────────────────────────────────────
+
+export const submitClaim = async (claimData) => {
+    const headers = await getAuthHeaders();
+    const response = await fetch(`${API_URL}/claims/`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify(claimData),
+    });
+    if (!response.ok) throw new Error('Failed to submit claim');
+    return await response.json();
+};
+
+export const fetchMyClaims = async () => {
+    const headers = await getAuthHeaders();
+    const response = await fetch(`${API_URL}/claims/`, { headers });
+    if (!response.ok) throw new Error('Failed to fetch claims');
+    return await response.json();
 };

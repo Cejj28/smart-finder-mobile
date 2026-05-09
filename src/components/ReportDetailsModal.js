@@ -4,12 +4,14 @@ import { Ionicons } from '@expo/vector-icons';
 import { getMatches } from '../services/api';
 import { COLORS, SPACING, RADIUS, FONT_SIZES, FONT_WEIGHTS, SHADOWS } from '../constants/theme';
 import StatusBadge from './StatusBadge';
+import ClaimModal from './ClaimModal';
 
 // showStatus=false hides the Approval status row (used in public feed)
 // showStatus=true shows it (used in My Posts where status matters)
-export default function ReportDetailsModal({ visible, item, onClose, showStatus = false }) {
+export default function ReportDetailsModal({ visible, item, onClose, showStatus = false, onMatchPress }) {
     const [matches, setMatches] = useState([]);
     const [loadingMatches, setLoadingMatches] = useState(false);
+    const [claimModalVisible, setClaimModalVisible] = useState(false);
 
     useEffect(() => {
         if (visible && item?.id && item?.category) {
@@ -136,7 +138,17 @@ export default function ReportDetailsModal({ visible, item, onClose, showStatus 
                                     
                                     <View style={styles.matchList}>
                                         {matches.map((match) => (
-                                            <View key={match.id} style={styles.matchCard}>
+                                            <TouchableOpacity
+                                                key={match.id}
+                                                style={styles.matchCard}
+                                                activeOpacity={0.7}
+                                                onPress={() => {
+                                                    onClose();
+                                                    setTimeout(() => {
+                                                        if (onMatchPress) onMatchPress(match);
+                                                    }, 350); // wait for modal close animation
+                                                }}
+                                            >
                                                 <View style={styles.matchIconWrap}>
                                                     <Ionicons 
                                                         name={match.type === 'Lost' ? 'search' : 'checkmark-circle'} 
@@ -148,16 +160,36 @@ export default function ReportDetailsModal({ visible, item, onClose, showStatus 
                                                     <Text style={styles.matchItemName} numberOfLines={1}>{match.item}</Text>
                                                     <Text style={styles.matchLocation} numberOfLines={1}>{match.location}</Text>
                                                 </View>
-                                                <Ionicons name="chevron-forward" size={16} color={COLORS.textLight} />
-                                            </View>
+                                                <View style={styles.viewBtn}>
+                                                    <Text style={styles.viewBtnText}>View</Text>
+                                                    <Ionicons name="chevron-forward" size={14} color={COLORS.primary} />
+                                                </View>
+                                            </TouchableOpacity>
                                         ))}
                                     </View>
                                 </>
+                            )}
+                            
+                            {/* Claim Button for Found items */}
+                            {item.type === 'Found' && (
+                                <TouchableOpacity 
+                                    style={styles.claimButton}
+                                    onPress={() => setClaimModalVisible(true)}
+                                >
+                                    <Ionicons name="hand-right" size={20} color={COLORS.white} />
+                                    <Text style={styles.claimButtonText}>Claim This Item</Text>
+                                </TouchableOpacity>
                             )}
                         </View>
                     </ScrollView>
                 </View>
             </View>
+
+            <ClaimModal 
+                visible={claimModalVisible} 
+                item={item} 
+                onClose={() => setClaimModalVisible(false)} 
+            />
         </Modal>
     );
 }
@@ -298,6 +330,20 @@ const styles = StyleSheet.create({
         borderWidth: 1,
         borderColor: COLORS.border,
     },
+    viewBtn: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 2,
+        backgroundColor: COLORS.primaryLight,
+        paddingHorizontal: SPACING.sm,
+        paddingVertical: 4,
+        borderRadius: RADIUS.sm,
+    },
+    viewBtnText: {
+        fontSize: FONT_SIZES.xs,
+        fontWeight: FONT_WEIGHTS.bold,
+        color: COLORS.primary,
+    },
     matchIconWrap: {
         width: 32,
         height: 32,
@@ -318,5 +364,21 @@ const styles = StyleSheet.create({
     matchLocation: {
         fontSize: FONT_SIZES.xs,
         color: COLORS.textLight,
+    },
+    claimButton: {
+        backgroundColor: COLORS.primary,
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: SPACING.md,
+        borderRadius: RADIUS.md,
+        marginTop: SPACING.xl,
+        gap: SPACING.sm,
+        ...SHADOWS.md,
+    },
+    claimButtonText: {
+        color: COLORS.white,
+        fontSize: FONT_SIZES.md,
+        fontWeight: FONT_WEIGHTS.bold,
     },
 });

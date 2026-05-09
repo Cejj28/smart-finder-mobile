@@ -12,7 +12,7 @@ import {
     Image,
     ActivityIndicator,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { View as SafeAreaView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import { COLORS, SPACING, RADIUS, FONT_SIZES, FONT_WEIGHTS, SHADOWS } from '../constants/theme';
@@ -164,7 +164,7 @@ export default function ReportScreen() {
         setDescription('');
         setContactInfo('');
         setImage(null);
-        setTags([]);
+        setPrediction(null);
     };
 
     return (
@@ -333,9 +333,23 @@ export default function ReportScreen() {
                         </View>
 
                         {/* Submit */}
-                        <TouchableOpacity style={styles.submitBtn} onPress={handleSubmit} activeOpacity={0.8}>
-                            <Ionicons name="send" size={18} color={COLORS.white} />
-                            <Text style={styles.submitText}>Submit Report</Text>
+                        <TouchableOpacity
+                            style={[styles.submitBtn, isSubmitting && styles.submitBtnDisabled]}
+                            onPress={handleSubmit}
+                            activeOpacity={0.8}
+                            disabled={isSubmitting}
+                        >
+                            {isSubmitting ? (
+                                <>
+                                    <ActivityIndicator size="small" color={COLORS.white} />
+                                    <Text style={styles.submitText}>Submitting...</Text>
+                                </>
+                            ) : (
+                                <>
+                                    <Ionicons name="send" size={18} color={COLORS.white} />
+                                    <Text style={styles.submitText}>Submit Report</Text>
+                                </>
+                            )}
                         </TouchableOpacity>
                     </View>
                 </ScrollView>
@@ -567,6 +581,9 @@ const styles = StyleSheet.create({
         borderRadius: RADIUS.md,
         marginTop: SPACING.xxl,
         ...SHADOWS.md,
+    },
+    submitBtnDisabled: {
+        opacity: 0.7,
     },
     submitText: {
         fontSize: FONT_SIZES.lg,

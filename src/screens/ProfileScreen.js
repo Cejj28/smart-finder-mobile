@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
     View,
     Text,
@@ -7,21 +7,50 @@ import {
     TouchableOpacity,
     Alert,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { View as SafeAreaView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS, SPACING, RADIUS, FONT_SIZES, FONT_WEIGHTS, SHADOWS } from '../constants/theme';
+import MyClaimsModal from '../components/MyClaimsModal';
+import { fetchMyClaims, fetchMyItems } from '../services/api';
 
 const MENU_ITEMS = [
-    { icon: 'person-outline', label: 'Edit Profile', color: COLORS.primary },
-    { icon: 'lock-closed-outline', label: 'Change Password', color: COLORS.primary },
+    { id: 'claims', icon: 'document-text-outline', label: 'My Claims', color: COLORS.primary },
+    { id: 'edit', icon: 'person-outline', label: 'Edit Profile', color: COLORS.primary },
+    { id: 'password', icon: 'lock-closed-outline', label: 'Change Password', color: COLORS.primary },
 ];
 
 export default function ProfileScreen({ onLogout }) {
+    const [myClaimsVisible, setMyClaimsVisible] = useState(false);
+    const [stats, setStats] = useState({ reports: 0, claims: 0, found: 0 });
+
+    useEffect(() => {
+        const loadStats = async () => {
+            try {
+                const claims = await fetchMyClaims();
+                const items = await fetchMyItems();
+                setStats({
+                    reports: items.length,
+                    claims: claims.length,
+                    found: items.filter(i => i.type === 'Found').length
+                });
+            } catch (err) {
+                console.error("Failed to load stats", err);
+            }
+        };
+        loadStats();
+    }, []);
+
     const handleLogout = () => {
         Alert.alert('Log Out', 'Are you sure you want to log out?', [
             { text: 'Cancel', style: 'cancel' },
             { text: 'Log Out', style: 'destructive', onPress: () => onLogout && onLogout() },
         ]);
+    };
+
+    const handleMenuPress = (id) => {
+        if (id === 'claims') {
+            setMyClaimsVisible(true);
+        }
     };
 
     return (
@@ -44,17 +73,17 @@ export default function ProfileScreen({ onLogout }) {
                     <Text style={styles.userEmail}>juan.delacruz@email.com</Text>
                     <View style={styles.statsContainer}>
                         <View style={styles.profileStat}>
-                            <Text style={styles.profileStatNumber}>3</Text>
+                            <Text style={styles.profileStatNumber}>{stats.reports}</Text>
                             <Text style={styles.profileStatLabel}>Reports</Text>
                         </View>
                         <View style={styles.statDivider} />
                         <View style={styles.profileStat}>
-                            <Text style={styles.profileStatNumber}>1</Text>
+                            <Text style={styles.profileStatNumber}>{stats.claims}</Text>
                             <Text style={styles.profileStatLabel}>Claimed</Text>
                         </View>
                         <View style={styles.statDivider} />
                         <View style={styles.profileStat}>
-                            <Text style={styles.profileStatNumber}>2</Text>
+                            <Text style={styles.profileStatNumber}>{stats.found}</Text>
                             <Text style={styles.profileStatLabel}>Found</Text>
                         </View>
                     </View>
@@ -63,7 +92,12 @@ export default function ProfileScreen({ onLogout }) {
                 {/* Menu */}
                 <View style={styles.menuCard}>
                     {MENU_ITEMS.map((item, index) => (
-                        <TouchableOpacity key={index} style={styles.menuItem} activeOpacity={0.6}>
+                        <TouchableOpacity 
+                            key={index} 
+                            style={styles.menuItem} 
+                            activeOpacity={0.6}
+                            onPress={() => handleMenuPress(item.id)}
+                        >
                             <View style={[styles.menuIconWrap, { backgroundColor: item.color + '15' }]}>
                                 <Ionicons name={item.icon} size={20} color={item.color} />
                             </View>
@@ -82,6 +116,11 @@ export default function ProfileScreen({ onLogout }) {
                 {/* Version */}
                 <Text style={styles.version}>SmartFinder Mobile v1.0.0</Text>
             </ScrollView>
+
+            <MyClaimsModal 
+                visible={myClaimsVisible} 
+                onClose={() => setMyClaimsVisible(false)} 
+            />
         </SafeAreaView>
     );
 }

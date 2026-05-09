@@ -7,7 +7,7 @@ import {
     StyleSheet,
     RefreshControl,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { View as SafeAreaView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS, SPACING, RADIUS, FONT_SIZES, FONT_WEIGHTS, SHADOWS } from '../constants/theme';
 import ItemCard from '../components/ItemCard';
@@ -54,8 +54,8 @@ export default function HomeScreen() {
         found: items.filter((i) => i.type === 'Found').length,
     };
 
-    return (
-        <SafeAreaView style={styles.container}>
+    const ListHeader = () => (
+        <>
             {/* Header */}
             <View style={styles.header}>
                 <Text style={styles.greeting}>Hello, User! 👋</Text>
@@ -77,8 +77,12 @@ export default function HomeScreen() {
                     <Text style={styles.statLabel}>Found</Text>
                 </View>
             </View>
+        </>
+    );
 
-            {/* Search Bar */}
+    return (
+        <SafeAreaView style={styles.container}>
+            {/* Sticky Search Bar — stays fixed at the top */}
             <View style={styles.searchContainer}>
                 <Ionicons name="search-outline" size={18} color={COLORS.textLight} style={styles.searchIcon} />
                 <TextInput
@@ -99,11 +103,12 @@ export default function HomeScreen() {
                 )}
             </View>
 
-            {/* Items List */}
+            {/* Items List — header (greeting + stats) scrolls with the list */}
             <FlatList
                 data={filteredItems}
                 keyExtractor={(item) => item.id.toString()}
                 renderItem={({ item }) => <ItemCard item={item} onPress={() => setSelectedItem(item)} />}
+                ListHeaderComponent={<ListHeader />}
                 contentContainerStyle={styles.listContent}
                 showsVerticalScrollIndicator={false}
                 refreshControl={
@@ -125,7 +130,8 @@ export default function HomeScreen() {
             <ReportDetailsModal 
                 visible={!!selectedItem} 
                 item={selectedItem} 
-                onClose={() => setSelectedItem(null)} 
+                onClose={() => setSelectedItem(null)}
+                onMatchPress={(match) => setSelectedItem(match)}
             />
         </SafeAreaView>
     );
@@ -184,7 +190,8 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         backgroundColor: COLORS.cardBg,
         marginHorizontal: SPACING.xl,
-        marginBottom: SPACING.lg,
+        marginTop: SPACING.md,
+        marginBottom: SPACING.sm,
         borderRadius: RADIUS.md,
         borderWidth: 1,
         borderColor: COLORS.inputBorder,
