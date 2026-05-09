@@ -173,7 +173,7 @@ export default function ReportDetailsModal({ visible, item, onClose, showStatus 
                     </ScrollView>
 
                     {/* Sticky Claim Button Footer for Found items */}
-                    {item.type === 'Found' && (
+                    {item.type === 'Found' && item.status === 'Approved' && (
                         <View style={styles.footer}>
                             <TouchableOpacity 
                                 style={styles.claimButton}
