@@ -45,12 +45,12 @@ export default function NotificationsScreen({ navigation }) {
                 setNotifs(prev => prev.map(n => n.id === notif.id ? { ...n, is_read: true } : n));
             }
             
-            // Navigate based on target_page if applicable
-            if (notif.target_page === '/profile') {
-                navigation.navigate('Profile');
-            } else if (notif.target_page === '/items' || notif.target_page === '/claims') {
-                // For student mobile, they usually go to Profile/MyPosts for updates
+            // Navigate to appropriate screen
+            if (notif.target_page === '/profile' || notif.target_page === '/items' || notif.target_page === '/claims') {
                 navigation.navigate('My Posts');
+            } else {
+                // Fallback to Home if unknown
+                navigation.navigate('Home');
             }
         } catch (err) {
             console.error('Failed to mark read:', err);
