@@ -196,6 +196,10 @@ export const submitClaim = async (claimData) => {
 export const fetchMyClaims = async () => {
     const headers = await getAuthHeaders();
     const response = await fetch(`${API_URL}/claims/`, { headers });
-    if (!response.ok) throw new Error('Failed to fetch claims');
+    if (!response.ok) {
+        const errorText = await response.text();
+        console.error(`fetchMyClaims failed with status ${response.status}:`, errorText);
+        throw new Error('Failed to fetch claims');
+    }
     return await response.json();
 };
