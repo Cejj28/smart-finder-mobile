@@ -8,6 +8,10 @@ import {
     TouchableOpacity,
     ActivityIndicator,
     Alert,
+    KeyboardAvoidingView,
+    Platform,
+    TouchableWithoutFeedback,
+    Keyboard,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS, SPACING, RADIUS, FONT_SIZES, FONT_WEIGHTS, SHADOWS } from '../constants/theme';
@@ -41,49 +45,54 @@ export const EditProfileModal = ({ visible, onClose, profile, onUpdate }) => {
 
     return (
         <Modal visible={visible} animationType="slide" transparent>
-            <View style={styles.modalOverlay}>
-                <View style={styles.modalContainer}>
-                    <View style={styles.modalHeader}>
-                        <Text style={styles.modalTitle}>Edit Profile</Text>
-                        <TouchableOpacity onPress={onClose}>
-                            <Ionicons name="close" size={24} color={COLORS.textDark} />
-                        </TouchableOpacity>
+            <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+                <KeyboardAvoidingView 
+                    behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+                    style={styles.modalOverlay}
+                >
+                    <View style={styles.modalContainer}>
+                        <View style={styles.modalHeader}>
+                            <Text style={styles.modalTitle}>Edit Profile</Text>
+                            <TouchableOpacity onPress={onClose}>
+                                <Ionicons name="close" size={24} color={COLORS.textDark} />
+                            </TouchableOpacity>
+                        </View>
+                        
+                        <View style={styles.form}>
+                            <Text style={styles.label}>Full Name</Text>
+                            <TextInput 
+                                style={styles.input} 
+                                value={form.full_name} 
+                                onChangeText={(t) => setForm({...form, full_name: t})} 
+                            />
+                            
+                            <Text style={styles.label}>Email</Text>
+                            <TextInput 
+                                style={styles.input} 
+                                value={form.email} 
+                                onChangeText={(t) => setForm({...form, email: t})} 
+                                keyboardType="email-address"
+                                autoCapitalize="none"
+                            />
+                            
+                            <Text style={styles.label}>Department</Text>
+                            <TextInput 
+                                style={styles.input} 
+                                value={form.department} 
+                                onChangeText={(t) => setForm({...form, department: t})} 
+                            />
+                            
+                            <TouchableOpacity 
+                                style={[styles.saveBtn, loading && styles.disabledBtn]} 
+                                onPress={handleSave}
+                                disabled={loading}
+                            >
+                                {loading ? <ActivityIndicator color={COLORS.white} /> : <Text style={styles.saveBtnText}>Save Changes</Text>}
+                            </TouchableOpacity>
+                        </View>
                     </View>
-                    
-                    <View style={styles.form}>
-                        <Text style={styles.label}>Full Name</Text>
-                        <TextInput 
-                            style={styles.input} 
-                            value={form.full_name} 
-                            onChangeText={(t) => setForm({...form, full_name: t})} 
-                        />
-                        
-                        <Text style={styles.label}>Email</Text>
-                        <TextInput 
-                            style={styles.input} 
-                            value={form.email} 
-                            onChangeText={(t) => setForm({...form, email: t})} 
-                            keyboardType="email-address"
-                            autoCapitalize="none"
-                        />
-                        
-                        <Text style={styles.label}>Department</Text>
-                        <TextInput 
-                            style={styles.input} 
-                            value={form.department} 
-                            onChangeText={(t) => setForm({...form, department: t})} 
-                        />
-                        
-                        <TouchableOpacity 
-                            style={[styles.saveBtn, loading && styles.disabledBtn]} 
-                            onPress={handleSave}
-                            disabled={loading}
-                        >
-                            {loading ? <ActivityIndicator color={COLORS.white} /> : <Text style={styles.saveBtnText}>Save Changes</Text>}
-                        </TouchableOpacity>
-                    </View>
-                </View>
-            </View>
+                </KeyboardAvoidingView>
+            </TouchableWithoutFeedback>
         </Modal>
     );
 };
@@ -126,50 +135,55 @@ export const ChangePasswordModal = ({ visible, onClose }) => {
 
     return (
         <Modal visible={visible} animationType="slide" transparent>
-            <View style={styles.modalOverlay}>
-                <View style={styles.modalContainer}>
-                    <View style={styles.modalHeader}>
-                        <Text style={styles.modalTitle}>Change Password</Text>
-                        <TouchableOpacity onPress={onClose}>
-                            <Ionicons name="close" size={24} color={COLORS.textDark} />
-                        </TouchableOpacity>
+            <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+                <KeyboardAvoidingView 
+                    behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+                    style={styles.modalOverlay}
+                >
+                    <View style={styles.modalContainer}>
+                        <View style={styles.modalHeader}>
+                            <Text style={styles.modalTitle}>Change Password</Text>
+                            <TouchableOpacity onPress={onClose}>
+                                <Ionicons name="close" size={24} color={COLORS.textDark} />
+                            </TouchableOpacity>
+                        </View>
+                        
+                        <View style={styles.form}>
+                            <Text style={styles.label}>Current Password</Text>
+                            <TextInput 
+                                style={styles.input} 
+                                value={form.current_password} 
+                                onChangeText={(t) => setForm({...form, current_password: t})} 
+                                secureTextEntry
+                            />
+                            
+                            <Text style={styles.label}>New Password</Text>
+                            <TextInput 
+                                style={styles.input} 
+                                value={form.new_password} 
+                                onChangeText={(t) => setForm({...form, new_password: t})} 
+                                secureTextEntry
+                            />
+                            
+                            <Text style={styles.label}>Retype New Password</Text>
+                            <TextInput 
+                                style={styles.input} 
+                                value={form.confirm_password} 
+                                onChangeText={(t) => setForm({...form, confirm_password: t})} 
+                                secureTextEntry
+                            />
+                            
+                            <TouchableOpacity 
+                                style={[styles.saveBtn, loading && styles.disabledBtn]} 
+                                onPress={handleSave}
+                                disabled={loading}
+                            >
+                                {loading ? <ActivityIndicator color={COLORS.white} /> : <Text style={styles.saveBtnText}>Update Password</Text>}
+                            </TouchableOpacity>
+                        </View>
                     </View>
-                    
-                    <View style={styles.form}>
-                        <Text style={styles.label}>Current Password</Text>
-                        <TextInput 
-                            style={styles.input} 
-                            value={form.current_password} 
-                            onChangeText={(t) => setForm({...form, current_password: t})} 
-                            secureTextEntry
-                        />
-                        
-                        <Text style={styles.label}>New Password</Text>
-                        <TextInput 
-                            style={styles.input} 
-                            value={form.new_password} 
-                            onChangeText={(t) => setForm({...form, new_password: t})} 
-                            secureTextEntry
-                        />
-                        
-                        <Text style={styles.label}>Retype New Password</Text>
-                        <TextInput 
-                            style={styles.input} 
-                            value={form.confirm_password} 
-                            onChangeText={(t) => setForm({...form, confirm_password: t})} 
-                            secureTextEntry
-                        />
-                        
-                        <TouchableOpacity 
-                            style={[styles.saveBtn, loading && styles.disabledBtn]} 
-                            onPress={handleSave}
-                            disabled={loading}
-                        >
-                            {loading ? <ActivityIndicator color={COLORS.white} /> : <Text style={styles.saveBtnText}>Update Password</Text>}
-                        </TouchableOpacity>
-                    </View>
-                </View>
-            </View>
+                </KeyboardAvoidingView>
+            </TouchableWithoutFeedback>
         </Modal>
     );
 };
