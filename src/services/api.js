@@ -203,3 +203,32 @@ export const fetchMyClaims = async () => {
     }
     return await response.json();
 };
+
+// ─── NOTIFICATIONS ────────────────────────────────────────────────────────────
+
+export const fetchNotifications = async () => {
+    const headers = await getAuthHeaders();
+    const response = await fetch(`${API_URL}/notifications/`, { headers });
+    if (!response.ok) throw new Error('Failed to fetch notifications');
+    return await response.json();
+};
+
+export const markNotificationRead = async (id) => {
+    const headers = await getAuthHeaders();
+    const response = await fetch(`${API_URL}/notifications/${id}/mark_read/`, {
+        method: 'POST',
+        headers
+    });
+    if (!response.ok) throw new Error('Failed to mark notification as read');
+    return await response.json();
+};
+
+export const markAllNotificationsRead = async () => {
+    const headers = await getAuthHeaders();
+    const response = await fetch(`${API_URL}/notifications/mark_all_read/`, {
+        method: 'POST',
+        headers
+    });
+    if (!response.ok) throw new Error('Failed to mark all as read');
+    return await response.json();
+};
