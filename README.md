@@ -226,18 +226,35 @@ eas build --platform android --profile preview
 
 ## 📸 Screenshots
 
-> **Note to editor:** Replace the placeholders below with actual screenshots before submission.
+Here is a visual walk-through of the student mobile application:
 
-| Screen | Description |
-|---|---|
-| `screenshot-login.png` | Login screen with SmartFinder logo and dark theme |
-| `screenshot-register.png` | Student registration form |
-| `screenshot-home.png` | Home feed showing lost/found items with images |
-| `screenshot-report.png` | Report item form with AI category prediction |
-| `screenshot-myposts.png` | My Posts screen showing user's submissions |
-| `screenshot-notifications.png` | Notifications screen |
-| `screenshot-profile.png` | Profile screen with user info |
-| `screenshot-cold-start-hint.png` | Login screen showing "Server is waking up..." hint |
+### 🔐 1. Login Screen
+*The dark-themed student login screen featuring the SmartFinder logo.*
+![Mobile Login Screen](screenshots/screenshot-login.jfif)
+
+### 📝 2. Student Registration Screen
+*The registration form for students to sign up with their details.*
+![Mobile Registration Screen](screenshots/screenshot-register.jfif)
+
+### 🏠 3. Home Feed
+*The home feed showing real-time lost and found item reports with photos.*
+![Mobile Home Feed](screenshots/screenshot-home.jfif)
+
+### ➕ 4. Report Item Form
+*The intuitive report item screen including AI-powered category prediction.*
+![Mobile Report Item Form](screenshots/screenshot-report.jfif)
+
+### 📁 5. My Posts
+*Viewing and tracking all the items that the student has personally reported.*
+![Mobile My Posts](screenshots/screenshot-myposts.jfif)
+
+### 🔔 6. Notifications Feed
+*The list of notifications for claim approvals, replies, and status updates.*
+![Mobile Notifications Feed](screenshots/screenshot-notifications.jfif)
+
+### 👤 7. Student Profile Screen
+*The student profile view showing account information and the sign-out option.*
+![Mobile Student Profile Screen](screenshots/screenshot-profile.jfif)
 
 ---
 
