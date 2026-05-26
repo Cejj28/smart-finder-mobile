@@ -93,9 +93,11 @@ export const fetchItems = async () => {
         description: item.description,
         category: item.category,
         // Ensure image_url is formatted for mobile display
-        image_url: (item.image && typeof item.image === 'string') 
-            ? (item.image.startsWith('http') ? item.image : `${BASE_SERVER_URL}${item.image}`)
-            : null,
+        image_url: (() => {
+            if (!item.image || typeof item.image !== 'string') return null;
+            const rawUrl = item.image.startsWith('http') ? item.image : `${BASE_SERVER_URL}${item.image}`;
+            return USE_DEPLOYED ? rawUrl.replace('http://', 'https://') : rawUrl;
+        })(),
         status: item.status || 'Pending Review'
     }));
 };
@@ -143,9 +145,11 @@ export const fetchMyItems = async () => {
         description: item.description,
         contact_info: item.contact_info,
         category: item.category,
-        image_url: (item.image && typeof item.image === 'string') 
-            ? (item.image.startsWith('http') ? item.image : `${BASE_SERVER_URL}${item.image}`)
-            : null,
+        image_url: (() => {
+            if (!item.image || typeof item.image !== 'string') return null;
+            const rawUrl = item.image.startsWith('http') ? item.image : `${BASE_SERVER_URL}${item.image}`;
+            return USE_DEPLOYED ? rawUrl.replace('http://', 'https://') : rawUrl;
+        })(),
         status: item.status || 'Pending Review'
     }));
 };
@@ -207,9 +211,11 @@ export const getMatches = async (itemId) => {
         date: new Date(item.created_at).toLocaleDateString(),
         description: item.description,
         contact_info: item.contact_info,
-        image_url: (item.image && typeof item.image === 'string') 
-            ? (item.image.startsWith('http') ? item.image : `${BASE_SERVER_URL}${item.image}`)
-            : null,
+        image_url: (() => {
+            if (!item.image || typeof item.image !== 'string') return null;
+            const rawUrl = item.image.startsWith('http') ? item.image : `${BASE_SERVER_URL}${item.image}`;
+            return USE_DEPLOYED ? rawUrl.replace('http://', 'https://') : rawUrl;
+        })(),
         status: item.status || 'Pending Review'
     }));
 };
