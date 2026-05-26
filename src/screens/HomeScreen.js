@@ -12,18 +12,25 @@ import { Ionicons } from '@expo/vector-icons';
 import { COLORS, SPACING, RADIUS, FONT_SIZES, FONT_WEIGHTS, SHADOWS } from '../constants/theme';
 import ItemCard from '../components/ItemCard';
 import ReportDetailsModal from '../components/ReportDetailsModal';
-import { fetchItems } from '../services/api';
+import { fetchItems, fetchProfile } from '../services/api';
 
 export default function HomeScreen() {
     const [searchTerm, setSearchTerm] = useState('');
     const [refreshing, setRefreshing] = useState(false);
     const [items, setItems] = useState([]);
     const [selectedItem, setSelectedItem] = useState(null);
+    const [userName, setUserName] = useState('User');
 
     const loadData = async () => {
         try {
-            const data = await fetchItems();
-            setItems(data);
+            const [itemsData, profileData] = await Promise.all([
+                fetchItems(),
+                fetchProfile().catch(() => null)
+            ]);
+            setItems(itemsData);
+            if (profileData) {
+                setUserName(profileData.full_name || profileData.username || 'User');
+            }
         } catch (e) {
             console.error(e);
         }
@@ -58,7 +65,7 @@ export default function HomeScreen() {
         <>
             {/* Header */}
             <View style={styles.header}>
-                <Text style={styles.greeting}>Hello, User! 👋</Text>
+                <Text style={styles.greeting}>Hello, {userName}! 👋</Text>
                 <Text style={styles.subtitle}>Browse lost & found items</Text>
             </View>
 
