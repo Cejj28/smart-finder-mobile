@@ -3,6 +3,32 @@ import { Platform } from 'react-native';
 
 const USE_DEPLOYED = true; // Toggle this to switch between local and deployed backend
 
+// ─── Retry-aware fetch (handles Render free-tier cold starts) ─────────────────
+// Render spins down idle services; the first request after inactivity can time
+// out after ~30-60 s while the dyno wakes up. We transparently retry up to
+// MAX_RETRIES times with a generous per-attempt timeout before giving up.
+const TIMEOUT_MS = 65_000;  // 65 s — just over Render's wake-up window
+const MAX_RETRIES = 3;
+
+async function fetchWithRetry(url, options = {}, retries = MAX_RETRIES) {
+    for (let attempt = 1; attempt <= retries; attempt++) {
+        const controller = new AbortController();
+        const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
+        try {
+            const response = await fetch(url, { ...options, signal: controller.signal });
+            clearTimeout(timer);
+            return response;
+        } catch (err) {
+            clearTimeout(timer);
+            const isLastAttempt = attempt === retries;
+            const isTimeout = err.name === 'AbortError' || err.message?.includes('timed out') || err.message?.includes('Network request failed');
+            if (isLastAttempt || !isTimeout) throw err;
+            // Silent retry — the caller's loading state keeps showing
+            console.log(`[SmartFinder] Server waking up… retry ${attempt}/${retries - 1}`);
+        }
+    }
+}
+
 const API_URL = USE_DEPLOYED
     ? 'https://smart-finder-django.onrender.com/api'
     : (__DEV__ 
@@ -36,7 +62,8 @@ export const registerStudent = async ({ full_name, email, department, password, 
 };
 
 export const loginApi = async (identifier, password) => {
-    const response = await fetch(`${API_URL}/login/`, {
+    // Uses fetchWithRetry so Render cold-start timeouts are handled silently
+    const response = await fetchWithRetry(`${API_URL}/login/`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username: identifier, password })

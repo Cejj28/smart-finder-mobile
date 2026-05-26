@@ -21,6 +21,7 @@ export default function LoginScreen({ onLogin }) {
     const [password, setPassword] = useState('');
     const [showPassword, setShowPassword] = useState(false);
     const [loading, setLoading] = useState(false);
+    const [slowHint, setSlowHint] = useState(false);
     const [showRegister, setShowRegister] = useState(false);
 
     if (showRegister) {
@@ -33,9 +34,14 @@ export default function LoginScreen({ onLogin }) {
             return;
         }
         setLoading(true);
+        setSlowHint(false);
+        // After 4 s, show a hint that the server may be waking up (Render cold start)
+        const hintTimer = setTimeout(() => setSlowHint(true), 4000);
         try {
             const data = await loginApi(identifier, password);
+            clearTimeout(hintTimer);
             setLoading(false);
+            setSlowHint(false);
             onLogin({ 
                 username: data.username, 
                 email: data.email,
@@ -43,7 +49,9 @@ export default function LoginScreen({ onLogin }) {
                 is_staff: data.is_staff
             });
         } catch (err) {
+            clearTimeout(hintTimer);
             setLoading(false);
+            setSlowHint(false);
             Alert.alert('Login Failed', 'Invalid username/email or password.');
         }
     };
@@ -117,6 +125,13 @@ export default function LoginScreen({ onLogin }) {
                                 {loading ? 'Signing in...' : 'Sign In'}
                             </Text>
                         </TouchableOpacity>
+
+                        {/* Cold-start hint — only visible after 4 s of loading */}
+                        {slowHint && (
+                            <Text style={styles.slowHint}>
+                                ⏳ Server is waking up, please wait a moment...
+                            </Text>
+                        )}
 
                         {/* Create Account Link */}
                         <TouchableOpacity style={styles.registerLink} onPress={() => setShowRegister(true)}>
@@ -245,6 +260,13 @@ const styles = StyleSheet.create({
     registerLinkBold: {
         color: COLORS.primary,
         fontWeight: FONT_WEIGHTS.bold,
+    },
+    slowHint: {
+        textAlign: 'center',
+        fontSize: FONT_SIZES.xs,
+        color: 'rgba(255, 255, 255, 0.45)',
+        marginTop: SPACING.sm,
+        fontStyle: 'italic',
     },
     shape1: {
         position: 'absolute',
