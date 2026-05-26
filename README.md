@@ -174,7 +174,7 @@ eas build:configure
 eas build --platform android --profile preview
 ```
 
-> This will produce a downloadable `.apk` file from the Expo cloud build service. Requires a free Expo account.
+> ✅ **Pre-built Standing APK**: You can directly download the pre-compiled Android APK or scan its installation QR code here: [Expo Standalone APK Build](https://expo.dev/accounts/cejj28/projects/smart-finder-mobile/builds/c160b358-995a-4def-9215-670aa1e169cc) (No developer setup required).
 
 ---
 
@@ -183,7 +183,7 @@ eas build --platform android --profile preview
 | Platform | Status | Access |
 |---|---|---|
 | **Expo Go (Development)** | ✅ Active | Scan QR code via `npm start` |
-| **Android APK (EAS Build)** | 🔧 Buildable via `eas build` | See APK Build section above |
+| **Android APK (EAS Build)** | ✅ Live APK | [Download APK / Scan QR Code](https://expo.dev/accounts/cejj28/projects/smart-finder-mobile/builds/c160b358-995a-4def-9215-670aa1e169cc) |
 | **iOS (TestFlight)** | ❌ Not configured | Requires Apple Developer account |
 | **Backend (Django)** | ✅ Live | [https://smart-finder-django.onrender.com](https://smart-finder-django.onrender.com) |
 | **ML Service (FastAPI)** | ✅ Live | [https://smart-finder-fastapi.onrender.com](https://smart-finder-fastapi.onrender.com) |
